@@ -27,7 +27,7 @@ var errUsage = errors.New("usage error")
 
 // runTUI scans in a background goroutine and drives the interactive browser.
 // in/out are injectable for tests; nil means use the terminal.
-func runTUI(root string, opts scanner.Options, in io.Reader, out io.Writer) error {
+func runTUI(root string, opts *scanner.Options, in io.Reader, out io.Writer) error {
 	m := tui.New()
 	m.SetScanRoot(root)
 
@@ -46,8 +46,11 @@ func runTUI(root string, opts scanner.Options, in io.Reader, out io.Writer) erro
 	defer cancel()
 
 	scanStart := time.Now()
+
 	scanOpts := opts
-	scanOpts.OnProgress = func(s scanner.Stats) { p.Send(tui.Progress(s, time.Since(scanStart))) }
+	scanOpts.OnProgress = func(s scanner.Stats) {
+		p.Send(tui.Progress(s, time.Since(scanStart)))
+	}
 
 	go func() {
 		res, err := scanner.Scan(ctx, root, scanOpts)
@@ -145,7 +148,7 @@ func run() error {
 		return err
 	}
 
-	scanOpts := scanner.Options{Workers: *workers, XDev: *xdev, Excludes: excludes}
+	scanOpts := &scanner.Options{Workers: *workers, XDev: *xdev, Excludes: excludes}
 
 	useTUI := !*jsonOut && !*textOut && isTerminal(os.Stdin) && isTerminal(os.Stdout)
 	if useTUI {
@@ -195,7 +198,7 @@ func resolveRoot(arg string, allArgs []string) (string, error) {
 }
 
 // runText scans and renders the plain text or JSON report.
-func runText(root string, scanOpts scanner.Options, tf textFlags) error {
+func runText(root string, scanOpts *scanner.Options, tf textFlags) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 

@@ -90,7 +90,7 @@ func BenchmarkScanDirHeavy(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		res, err := Scan(ctx, root, Options{})
+		res, err := Scan(ctx, root, &Options{})
 		if err != nil || res.Err != nil {
 			b.Fatal(err)
 		}

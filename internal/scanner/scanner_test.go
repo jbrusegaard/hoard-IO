@@ -46,7 +46,7 @@ func TestScanCollectsFiles(t *testing.T) {
 	writeFile(t, filepath.Join(root, "sub", "b.bin"), 8192)
 	writeFile(t, filepath.Join(root, "sub", "deep", "c.bin"), 16384)
 
-	res, err := Scan(context.Background(), root, Options{Workers: 4})
+	res, err := Scan(context.Background(), root, &Options{Workers: 4})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +85,7 @@ func TestHardlinkCountedOnce(t *testing.T) {
 		t.Skipf("hardlinks unsupported: %v", err)
 	}
 
-	res, err := Scan(context.Background(), root, Options{Workers: 2})
+	res, err := Scan(context.Background(), root, &Options{Workers: 2})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +113,7 @@ func TestSymlinkNotFollowed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res, err := Scan(context.Background(), root, Options{Workers: 2})
+	res, err := Scan(context.Background(), root, &Options{Workers: 2})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,7 +133,7 @@ func TestExcludes(t *testing.T) {
 	writeFile(t, filepath.Join(root, "node_modules", "x.js"), 4096)
 	writeFile(t, filepath.Join(root, "vendor", "lib", "y.a"), 4096)
 
-	res, err := Scan(context.Background(), root, Options{
+	res, err := Scan(context.Background(), root, &Options{
 		Workers:  2,
 		Excludes: []string{"node_modules", "vendor"},
 	})
@@ -167,7 +167,7 @@ func TestUnreadableDirRecordedNotFatal(t *testing.T) {
 	}
 	t.Cleanup(func() { os.Chmod(filepath.Dir(locked), 0o755) })
 
-	res, err := Scan(context.Background(), root, Options{Workers: 2})
+	res, err := Scan(context.Background(), root, &Options{Workers: 2})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,7 +199,7 @@ func TestWideFanOutCompletes(t *testing.T) {
 			}
 		}
 	}
-	res, err := Scan(context.Background(), root, Options{Workers: 2})
+	res, err := Scan(context.Background(), root, &Options{Workers: 2})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,7 +221,7 @@ func TestCancelStopsScan(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	res, err := Scan(ctx, root, Options{Workers: 4})
+	res, err := Scan(ctx, root, &Options{Workers: 4})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -96,7 +96,7 @@ func BenchmarkScanFixture(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		res, err := Scan(ctx, root, Options{})
+		res, err := Scan(ctx, root, &Options{})
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -114,7 +114,7 @@ func BenchmarkScanWorkers(b *testing.B) {
 			b.ReportAllocs()
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				if _, err := Scan(ctx, root, Options{Workers: w}); err != nil {
+				if _, err := Scan(ctx, root, &Options{Workers: w}); err != nil {
 					b.Fatal(err)
 				}
 			}

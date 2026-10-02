@@ -38,7 +38,7 @@ func TestRunTUIQuitsDuringScan(t *testing.T) {
 	var out bytes.Buffer
 	done := make(chan error, 1)
 	go func() {
-		done <- runTUI(dir, scanner.Options{Workers: 2, ProgressEvery: 20 * time.Millisecond}, in, &out)
+		done <- runTUI(dir, &scanner.Options{Workers: 2, ProgressEvery: 20 * time.Millisecond}, in, &out)
 	}()
 
 	time.Sleep(50 * time.Millisecond)
@@ -68,7 +68,7 @@ func TestRunTUIFullSession(t *testing.T) {
 	var out bytes.Buffer
 	done := make(chan error, 1)
 	go func() {
-		done <- runTUI(dir, scanner.Options{Workers: 2, ProgressEvery: 10 * time.Millisecond}, in, &out)
+		done <- runTUI(dir, &scanner.Options{Workers: 2, ProgressEvery: 10 * time.Millisecond}, in, &out)
 	}()
 
 	// Wait for the scan to finish (fixture is tiny), then browse and quit.

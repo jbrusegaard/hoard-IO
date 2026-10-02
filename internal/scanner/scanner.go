@@ -85,7 +85,11 @@ type walker struct {
 
 // Scan walks root and everything below it. Cancelling ctx stops the scan and
 // yields whatever was collected so far in Result (with Err set to ctx.Err()).
-func Scan(ctx context.Context, root string, opts Options) (*Result, error) {
+func Scan(ctx context.Context, root string, opts *Options) (*Result, error) {
+	if opts == nil {
+		opts = &Options{}
+	}
+
 	info, err := os.Lstat(root)
 	if err != nil {
 		return nil, fmt.Errorf("stat %s: %w", root, err)
