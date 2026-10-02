@@ -1,0 +1,23 @@
+# Binaries
+/hoardio
+/dist/
+*.exe
+
+# Test & coverage
+coverage.out
+coverage.html
+*.cover
+
+# Profiles
+*.prof
+cpu.prof
+mem.prof
+
+# Tools
+.gocache/
+bin/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
