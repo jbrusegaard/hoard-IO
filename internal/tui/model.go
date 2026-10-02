@@ -238,23 +238,6 @@ func (m *Model) View() string {
 	}
 }
 
-func (m *Model) viewScanning() string {
-	root := "<scanning>"
-	if m.scanRoot != "" {
-		root = m.scanRoot
-	}
-
-	var b strings.Builder
-	fmt.Fprintf(&b, "%s %s\n\n", titleStyle.Render("Scanning"), dirStyle.Render(truncate(root, m.width-24)))
-	fmt.Fprintf(&b, "  %s %s\n", labelStyle.Render(fmt.Sprintf("%-5s", "dirs")), valueStyle.Render(fmt.Sprintf("%10d", m.stats.DirsScanned)))
-	fmt.Fprintf(&b, "  %s %s\n", labelStyle.Render(fmt.Sprintf("%-5s", "files")), valueStyle.Render(fmt.Sprintf("%10d", m.stats.FilesSeen)))
-	fmt.Fprintf(&b, "  %s %s\n", labelStyle.Render(fmt.Sprintf("%-5s", "size")), valueStyle.Render(fmt.Sprintf("%10s", scanner.HumanBytes(m.stats.BytesDisk))))
-	fmt.Fprintf(&b, "  %s %s\n", labelStyle.Render(fmt.Sprintf("%-5s", "time")), valueStyle.Render(fmt.Sprintf("%10s", m.elapsed.Round(time.Second).String())))
-	fmt.Fprintf(&b, "\n%s %s\n", footerStyle.Render("press ctrl+c to quit"), spinnerStyle.Render(string(rune(spinnerSet[m.spinIdx]))))
-
-	return b.String()
-}
-
 func (m *Model) pctOfParent(n *report.Node) float64 {
 	parent := m.cur().node
 	if parent.DiskUsage == 0 {
@@ -449,10 +432,16 @@ var (
 	cursorStyle   = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "24", Dark: "39"}).Bold(true)
 	selectedStyle = lipgloss.NewStyle().Background(lipgloss.AdaptiveColor{Light: "188", Dark: "236"})
 
-	titleStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.AdaptiveColor{Light: "55", Dark: "141"})
-	labelStyle   = lipgloss.NewStyle().Faint(true)
-	valueStyle   = lipgloss.NewStyle().Bold(true)
-	spinnerStyle = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "202", Dark: "208"})
+	titleStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.AdaptiveColor{Light: "55", Dark: "141"})
+	labelStyle    = lipgloss.NewStyle().Faint(true)
+	valueStyle    = lipgloss.NewStyle().Bold(true)
+	spinnerStyle  = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "202", Dark: "208"})
+	railStyle     = lipgloss.NewStyle().Faint(true).Foreground(lipgloss.AdaptiveColor{Light: "252", Dark: "238"})
+	sweepStyle    = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "24", Dark: "39"})
+	scanCardStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).
+			Padding(1, 2)
 
 	statusStyle = lipgloss.NewStyle().Reverse(true).Bold(true)
 	footerStyle = lipgloss.NewStyle().Faint(true)
