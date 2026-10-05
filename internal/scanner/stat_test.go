@@ -35,6 +35,10 @@ func TestStatEntryAndRoot(t *testing.T) {
 		t.Error("statRoot on a missing path want an error")
 	}
 
+	if _, err := Scan(context.Background(), filepath.Join(dir, "missing"), nil); err == nil {
+		t.Error("Scan on a missing root want an error")
+	}
+
 	f, err := os.Open(dir)
 	if err != nil {
 		t.Fatal(err)
