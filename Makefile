@@ -4,6 +4,14 @@ PKG      := ./cmd/hoardio
 VERSION  := $(shell git describe --tags --always 2>/dev/null || echo dev)
 LDFLAGS  := -X main.version=$(VERSION)
 
+# GOOS/GOARCH pairs the whole module must compile for: the unix fstatat path and
+# the portable stat fallback each have to keep building, and the TUI must work on
+# every one of them (bubbletea does not support js/wasm or plan9, so those stay
+# out of the list).
+CROSS_TARGETS := darwin/arm64 darwin/amd64 linux/amd64 linux/arm64 windows/amd64 \
+                 freebsd/amd64 netbsd/amd64 openbsd/amd64 dragonfly/amd64 \
+                 solaris/amd64 aix/ppc64
+
 COVERAGE_THRESHOLD := 70 # raise toward 80 as cmd/ gains tests
 PATCH_THRESHOLD    := 80
 MUTATION_THRESHOLD := 60
@@ -109,8 +117,16 @@ build-check:
 	go build ./...
 	go mod verify
 
+## Cross-compile gate: the portable stat fallback must keep building
+cross:
+	@for t in $(CROSS_TARGETS); do \
+		os=$${t%/*}; arch=$${t#*/}; \
+		printf "  %s/%s\n" "$$os" "$$arch"; \
+		GOOS=$$os GOARCH=$$arch go build ./... || exit 1; \
+	done
+
 ## Meta-target: everything that must pass before commit
-verify: lint test coverage patch-coverage security deadcode build-check
+verify: lint test coverage patch-coverage security deadcode build-check cross
 	@echo "All verification checks passed."
 
 ## Legacy quick gate (vet + gofmt)

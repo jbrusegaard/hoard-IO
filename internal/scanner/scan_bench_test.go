@@ -152,6 +152,7 @@ func BenchmarkReadDirOnly(b *testing.B) {
 
 // BenchmarkEntryInfo measures os.ReadDir + e.Info() on one dir: each Info is a
 // lazy Lstat(parent+"/"+name) in the stdlib (extra path alloc + syscall).
+// The scanner does NOT do this - see BenchmarkFstatatReuse.
 func BenchmarkEntryInfo(b *testing.B) {
 	root := setupFixture(b)
 	dir := filepath.Join(root, "d00", "s00") // 31 entries incl. dup link
@@ -175,8 +176,10 @@ func BenchmarkEntryInfo(b *testing.B) {
 	}
 }
 
-// BenchmarkLstatReuse measures Lstat on an already-joined path (what walkDir
-// could do instead of e.Info(), reusing its path string, same syscall count).
+// BenchmarkLstatReuse measures Lstat on an already-joined path. The join is
+// hoisted out of the timed loop, so this is NOT a fair comparison against
+// BenchmarkEntryInfo (which pays the join inside the loop): the two measure the
+// same full-path lookup. Kept only to show the syscall floor of path-based stat.
 func BenchmarkLstatReuse(b *testing.B) {
 	root := setupFixture(b)
 	dir := filepath.Join(root, "d00", "s00")
