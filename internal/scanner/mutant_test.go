@@ -3,7 +3,6 @@ package scanner
 import (
 	"bytes"
 	"context"
-	"os"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -83,36 +82,6 @@ func TestTickProgressPartialSinks(t *testing.T) {
 func TestDefaultWorkersPositive(t *testing.T) {
 	if w := defaultWorkers(); w < 1 {
 		t.Errorf("defaultWorkers()=%d, want >= 1", w)
-	}
-}
-
-// fakeInfo is an os.FileInfo whose Sys() carries no platform stat data,
-// forcing the devOf/inoOf/diskUsageOf fallback paths.
-type fakeInfo struct {
-	name string
-	size int64
-}
-
-func (f *fakeInfo) Name() string       { return f.name }
-func (f *fakeInfo) Size() int64        { return f.size }
-func (f *fakeInfo) Mode() os.FileMode  { return 0o644 }
-func (f *fakeInfo) ModTime() time.Time { return time.Time{} }
-func (f *fakeInfo) IsDir() bool        { return false }
-func (f *fakeInfo) Sys() any           { return nil }
-
-func TestStatFallbacks(t *testing.T) {
-	var info os.FileInfo = &fakeInfo{name: "x", size: 7}
-
-	if d := devOf(info); d != 0 {
-		t.Errorf("devOf fallback=%d want 0", d)
-	}
-
-	if i := inoOf(info); i != 0 {
-		t.Errorf("inoOf fallback=%d want 0", i)
-	}
-
-	if u := diskUsageOf(info); u != 7 {
-		t.Errorf("diskUsageOf fallback=%d want apparent size 7", u)
 	}
 }
 

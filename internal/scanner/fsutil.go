@@ -1,49 +1,22 @@
 package scanner
 
 import (
-	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
-	"syscall"
 )
 
 func defaultWorkers() int { return 2 * runtime.GOMAXPROCS(0) }
 
-type statT = syscall.Stat_t
-
-func statOf(info os.FileInfo) *statT {
-	st, _ := info.Sys().(*statT)
-	return st
-}
-
-// devOf returns the device id as a signed wide type: darwin's st_dev is an
-// int32, and widening to int64 keeps comparisons exact without any
-// sign-changing cast (which would be overflow-prone).
-func devOf(info os.FileInfo) int64 {
-	if st := statOf(info); st != nil {
-		return int64(st.Dev)
-	}
-
-	return 0
-}
-
-func inoOf(info os.FileInfo) uint64 {
-	if st := statOf(info); st != nil {
-		return st.Ino
-	}
-
-	return 0
-}
-
-// diskUsageOf returns bytes actually allocated on disk. Files with no stat
-// data (should not happen for regular files) fall back to apparent size.
-func diskUsageOf(info os.FileInfo) int64 {
-	if st := statOf(info); st != nil {
-		return st.Blocks * 512
-	}
-
-	return info.Size()
+// entryInfo is the stat data the walk needs for one directory entry. The
+// platform files (stat_unix.go, stat_other.go) fill it from whichever syscall
+// they have; fields the platform cannot report stay zero.
+type entryInfo struct {
+	dev   int64  // device id, widened to keep comparisons exact
+	ino   uint64 // inode / file id; zero means "cannot dedupe hardlinks"
+	nlink int64  // hard link count; 1 or less means dedupe cannot apply
+	disk  int64  // bytes actually allocated on disk
+	size  int64  // logical size
 }
 
 type hardkey struct {
