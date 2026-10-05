@@ -1,8 +1,8 @@
 # hoardio
 
-**Know thy hoard.** A fast, strictly read-only disk-usage explorer for macOS —
-find out where your storage actually went, then browse it in a colorful
-terminal UI.
+**Know thy hoard.** A fast, strictly read-only disk-usage explorer for the
+terminal — tuned for macOS, builds clean on Linux and Windows — find out where
+your storage actually went, then browse it in a colorful terminal UI.
 
 ```
 $ hoardio ~/Downloads
@@ -38,7 +38,23 @@ with WinDirStat-flavored heat bars so the culprits are obvious at a glance.
   largest sibling.
 - **Scriptable.** `--text` for a plain top-N report, `--json` for everything.
 - **Safe by default.** Symlinks are never followed (no cycles), hardlinks are
-  counted once, and `--xdev` keeps you on one filesystem.
+  counted once, and `--xdev` keeps you on one filesystem. The last two need
+  inode data, so they are unix-only (see Platforms).
+
+## Platforms
+
+The scanner has one fast path and one portable path:
+
+- **macOS, Linux, FreeBSD, NetBSD, OpenBSD, DragonFly** — every entry is
+  stat'd with `fstatat` against the directory the walk already has open, so
+  sizes are real allocations (`st_blocks`), hard links are counted once, and
+  `--xdev` works.
+- **Windows and everything else** — builds and runs on a portable fallback
+  that stats by path through `os.Lstat`. Those platforms expose no inode and no
+  allocation size, so disk usage equals apparent size, each hard link is
+  counted separately, and `--xdev` is ignored.
+
+`make cross` compiles both paths for every supported GOOS.
 
 ## Install
 

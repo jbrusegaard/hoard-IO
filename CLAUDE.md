@@ -10,6 +10,10 @@ renders text/JSON or an interactive bubbletea browser.
 
 - `cmd/hoardio/` - the single application entrypoint (main package)
 - `internal/scanner/` - parallel filesystem walker; hardlink dedupe, excludes, progress callbacks
+  - `stat_unix.go` / `stat_other.go` are the platform split: `fstatat` against the
+    open dir fd on unix, `os.Lstat` by path elsewhere. Keep every syscall behind
+    that seam (`entryInfo`, `statEntry`, `statRoot`, `dirFD`) so Windows and the
+    BSDs keep building; tag platform-specific tests the same way.
 - `internal/report/` - tree rollup from scan results; text and JSON renderers
 - `internal/tui/` - bubbletea model: scan-progress view + ncdu-style browser
 - No `pkg/`: nothing here is public API. Keep new code in `internal/`.
@@ -41,6 +45,7 @@ make security        # gosec + govulncheck (tools installed separately)
 make mutation        # gremlins (threshold: 60%)
 make deadcode        # deadcode (unreachable functions)
 make build-check     # go build + go mod verify
+make cross           # cross-compile gate: 11 GOOS/GOARCH pairs (unix + fallback)
 ```
 
 Performance diagnostics (not part of verify, use when investigating):
@@ -69,7 +74,8 @@ make profile         # CPU + memory profiles for pprof
 5. **Concurrency**: tests always run with `-race`. The scanner's unbounded
    condvar task queue (`internal/scanner/queue.go`) replaced a bounded-channel
    design that DEADLOCKED on wide trees — do not regress it.
-6. **Dependencies**: minimal. bubbletea/lipgloss/go-runewidth for the TUI only.
+6. **Dependencies**: minimal. bubbletea/lipgloss/go-runewidth for the TUI only;
+   `golang.org/x/sys/unix` only inside `stat_unix.go` (never in portable files).
    depguard blocks `io/ioutil` and `github.com/pkg/errors`.
 7. **Testing**: table-driven; property-style checks for pure functions; e2e
    test drives the real TUI through pipes (`cmd/hoardio/tui_e2e_test.go`).
