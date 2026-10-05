@@ -55,6 +55,8 @@ coverage:
 	fi
 
 ## Patch coverage (changed lines vs main; skips gracefully without git or Go changes)
+## Only lines inside a coverage block count as executable, so comments, blank
+## lines and declarations neither help nor hurt the ratio.
 patch-coverage:
 	@if ! git rev-parse --git-dir >/dev/null 2>&1; then \
 		echo "Not a git repository, skipping patch coverage"; exit 0; \
@@ -75,10 +77,18 @@ patch-coverage:
 			L=$${LINE_RANGE%%,*}; N=$${LINE_RANGE##*,}; \
 			[ "$$N" = "$$L" ] && N=1; \
 			for ((i=0; i<N; i++)); do \
-				TOTAL=$$((TOTAL + 1)); \
-				if awk -v f="$$FILE" -v ln="$$((L + i))" -F'[:,. ]+' '$$1 ~ f && $$2 <= ln && ln <= $$3 {found=1} END {exit !found}' coverage.out; then \
-					COVERED=$$((COVERED + 1)); \
-				fi; \
+				case "$$(awk -v f="$$FILE" -v ln="$$((L + i))" ' \
+					index($$0, f) == 0 { next } \
+					match($$0, /:[0-9]+\.[0-9]+,[0-9]+\.[0-9]+ [0-9]+ [0-9]+$$/) { \
+						split(substr($$0, RSTART + 1, RLENGTH - 1), a, " "); \
+						split(a[1], e, /[,.]/); \
+						if (e[1] + 0 <= ln + 0 && ln + 0 <= e[3] + 0) { inblock = 1; if (a[3] + 0 > 0) cov = 1 } \
+					} \
+					END { if (cov) print "covered"; else if (inblock) print "uncovered"; else print "none" } \
+				' coverage.out)" in \
+					covered)   TOTAL=$$((TOTAL + 1)); COVERED=$$((COVERED + 1)) ;; \
+					uncovered) TOTAL=$$((TOTAL + 1)) ;; \
+				esac; \
 			done; \
 		done; \
 	done; \
