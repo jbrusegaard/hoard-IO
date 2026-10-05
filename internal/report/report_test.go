@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/jbrusegaard/hoardio/internal/scanner"
@@ -103,5 +104,82 @@ func TestJSONRoundTrip(t *testing.T) {
 	}
 	if decoded.Tree.DiskUsage != 100 || decoded.Stats.FilesSeen != 1 {
 		t.Errorf("decoded tree/stats mismatch: %+v %+v", decoded.Tree, decoded.Stats)
+	}
+}
+
+func TestCompareFold(t *testing.T) {
+	tests := []struct {
+		a, b string
+		want int
+	}{
+		{"README.md", "readme.md", 0},
+		{"Ängström", "ängström", 0},
+		{"Banana", "Apricot", 1},
+		{"Apricot", "Banana", -1},
+		{"app", "apple", -1},
+		{"apple", "app", 1},
+		{"", "a", -1},
+		{"a", "", 1},
+	}
+
+	for _, tt := range tests {
+		if got := compareFold(tt.a, tt.b); got != tt.want {
+			t.Errorf("compareFold(%q, %q) = %d, want %d", tt.a, tt.b, got, tt.want)
+		}
+	}
+}
+
+func TestSortByNameCaseInsensitiveDirsFirst(t *testing.T) {
+	root := "/r"
+	tr := Build(root, []scanner.File{
+		mkFile(root, "zeta.bin", 10, 10),
+		mkFile(root, "Alpha.bin", 10, 10),
+		mkFile(root, "Beta/b.bin", 10, 10),
+	})
+
+	SortByName(tr.Root)
+
+	names := make([]string, 0, len(tr.Root.Children))
+	for _, c := range tr.Root.Children {
+		names = append(names, c.Name)
+	}
+
+	if want := []string{"Beta", "Alpha.bin", "zeta.bin"}; !slices.Equal(names, want) {
+		t.Errorf("sorted names = %v, want %v (dirs first, case-insensitive)", names, want)
+	}
+}
+
+func TestTopFilesKeepsInputOrderForTies(t *testing.T) {
+	files := []scanner.File{
+		{Name: "first", DiskUsage: 100},
+		{Name: "second", DiskUsage: 100},
+		{Name: "third", DiskUsage: 100},
+		{Name: "largest", DiskUsage: 200},
+		{Name: "smallest", DiskUsage: 1},
+	}
+
+	top := topFiles(files, 3, 0)
+
+	want := []string{"largest", "first", "second"}
+
+	got := make([]string, 0, len(top))
+	for _, f := range top {
+		got = append(got, f.Name)
+	}
+
+	if !slices.Equal(got, want) {
+		t.Errorf("top = %v, want %v", got, want)
+	}
+}
+
+func TestBuildTrailingSeparatorRoot(t *testing.T) {
+	tr := Build("/data/", []scanner.File{mkFile("/data", "sub/a.bin", 7, 7)})
+
+	if tr.Root.DiskUsage != 7 {
+		t.Errorf("root rollup = %d, want 7", tr.Root.DiskUsage)
+	}
+
+	if find(t, find(t, tr.Root, "sub"), "a.bin").DiskUsage != 7 {
+		t.Error("leaf rollup wrong")
 	}
 }
