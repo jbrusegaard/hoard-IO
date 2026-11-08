@@ -24,6 +24,7 @@ type Node struct {
 	Children     []*Node `json:"children,omitempty"`
 
 	childIdx map[string]*Node `json:"-"`
+	sortKey  string           `json:"-"`
 }
 
 // Tree is the full scan rendered for output.
@@ -40,8 +41,8 @@ func Build(root string, files []scanner.File) *Tree {
 
 	for _, f := range files {
 		rel, err := filepath.Rel(root, f.Path)
-		if err != nil || strings.HasPrefix(rel, "..") {
-			continue // file outside root (should not happen)
+		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			continue // file above root (should not happen)
 		}
 
 		cur := t.Root
@@ -74,8 +75,12 @@ func Build(root string, files []scanner.File) *Tree {
 	return t
 }
 
+// pruneIdx drops the transient child index and sort key from every node. Both
+// are rebuilt on demand, so no tree holds them between uses.
 func (n *Node) pruneIdx() {
 	n.childIdx = nil
+	n.sortKey = ""
+
 	for _, c := range n.Children {
 		c.pruneIdx()
 	}
@@ -97,13 +102,17 @@ func SortBySize(n *Node) {
 // SortByName orders children alphabetically (case-insensitive), dirs first,
 // recursively.
 func SortByName(n *Node) {
+	for _, c := range n.Children {
+		c.sortKey = strings.ToLower(c.Name)
+	}
+
 	sort.SliceStable(n.Children, func(i, j int) bool {
 		a, b := n.Children[i], n.Children[j]
 		if a.Dir != b.Dir {
 			return a.Dir
 		}
 
-		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
+		return a.sortKey < b.sortKey
 	})
 
 	for _, c := range n.Children {
@@ -181,10 +190,19 @@ func writeSummary(w io.Writer, t *Tree, res *scanner.Result, opts Options) error
 	}
 
 	if n := len(res.Errors); n > 0 {
-		return fprintf(w, "summary", "%d directories could not be read (see --errors or JSON output)\n", n)
+		return fprintf(w, "summary", "%d %s could not be read\n", n, dirWord(n))
 	}
 
 	return nil
+}
+
+// dirWord returns the noun that matches n unreadable directories.
+func dirWord(n int) string {
+	if n == 1 {
+		return "directory"
+	}
+
+	return "directories"
 }
 
 func writeTopFiles(w io.Writer, t *Tree, opts Options) error {

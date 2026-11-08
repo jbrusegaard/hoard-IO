@@ -5,6 +5,7 @@ package tui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -26,6 +27,7 @@ type doneMsg struct {
 	stats       scanner.Stats
 	elapsed     time.Duration
 	interrupted bool
+	unreadable  int // directories the scanner could not read
 }
 
 type failMsg struct{ err error }
@@ -41,12 +43,14 @@ type Model struct {
 	failed      bool
 	scanErr     string
 	interrupted bool
+	unreadable  int // directories the scan skipped, shown in the status line
 
 	root  *report.Node
 	stack []entry
 
-	visible []*report.Node // filtered children of the current node
-	yOff    int            // scroll offset into visible
+	visible []*report.Node        // filtered children of the current node
+	yOff    int                   // scroll offset into visible
+	sorted  map[*report.Node]bool // node children already ordered for the active sort
 
 	stats   scanner.Stats
 	elapsed time.Duration
@@ -74,9 +78,11 @@ func Progress(stats scanner.Stats, elapsed time.Duration) tea.Msg {
 	return progressMsg{stats: stats, elapsed: elapsed}
 }
 
-// ScanDone builds a doneMsg for the program event queue.
-func ScanDone(tree *report.Tree, stats scanner.Stats, elapsed time.Duration, interrupted bool) tea.Msg {
-	return doneMsg{tree: tree, stats: stats, elapsed: elapsed, interrupted: interrupted}
+// ScanDone builds a doneMsg for the program event queue. unreadable is the
+// number of directories the scanner could not read, so the browser can say the
+// totals it shows are incomplete.
+func ScanDone(tree *report.Tree, stats scanner.Stats, elapsed time.Duration, interrupted bool, unreadable int) tea.Msg {
+	return doneMsg{tree: tree, stats: stats, elapsed: elapsed, interrupted: interrupted, unreadable: unreadable}
 }
 
 // ScanFailed builds a failMsg for the program event queue.
@@ -112,9 +118,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Model) finishScan(msg doneMsg) (tea.Model, tea.Cmd) {
 	m.scanning = false
 	m.interrupted = msg.interrupted
+	m.unreadable = msg.unreadable
 	m.stats, m.elapsed = msg.stats, msg.elapsed
 	m.root = msg.tree.Root
-	report.SortBySize(m.root)
 	m.stack = []entry{{node: m.root, idx: 0}}
 	m.refreshVisible()
 
@@ -122,6 +128,10 @@ func (m *Model) finishScan(msg doneMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.scanning {
+		return m, scanningKey(msg)
+	}
+
 	switch msg.String() {
 	case "q", "ctrl+c":
 		return m, tea.Quit
@@ -145,55 +155,121 @@ func (m *Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// scanningKey handles keys while a scan is running. The tree does not exist
+// yet, so only quit is meaningful; dropping the rest keeps a cursor from moving
+// over a directory list that is not there.
+func scanningKey(msg tea.KeyMsg) tea.Cmd {
+	switch msg.String() {
+	case "q", "ctrl+c":
+		return tea.Quit
+	default:
+		return nil
+	}
+}
+
+// toggleSort flips the sort order. Nothing is re-sorted here: dropping the
+// memo map means every directory is re-ordered the next time it is shown, so a
+// keystroke costs the current directory instead of the whole tree.
 func (m *Model) toggleSort() {
 	m.sortByName = !m.sortByName
-
-	if m.root != nil {
-		if m.sortByName {
-			report.SortByName(m.root)
-		} else {
-			report.SortBySize(m.root)
-		}
-	}
-
+	m.sorted = make(map[*report.Node]bool)
 	m.refreshVisible()
 }
 
-func (m *Model) cur() *entry { return &m.stack[len(m.stack)-1] }
+// sortChildren orders one directory's children. It mirrors report.SortBySize
+// and report.SortByName, which walk the entire subtree: on a 2M-node home
+// folder that is 150-200ms per keystroke to display thirty rows.
+func sortChildren(children []*report.Node, byName bool) {
+	if byName {
+		sort.SliceStable(children, func(i, j int) bool {
+			a, b := children[i], children[j]
+			if a.Dir != b.Dir {
+				return a.Dir
+			}
+
+			return strings.ToLower(a.Name) < strings.ToLower(b.Name)
+		})
+
+		return
+	}
+
+	sort.SliceStable(children, func(i, j int) bool {
+		return children[i].DiskUsage > children[j].DiskUsage
+	})
+}
+
+// sortNode orders node's children unless they already carry the active order.
+func (m *Model) sortNode(node *report.Node) {
+	if m.sorted[node] {
+		return
+	}
+
+	if m.sorted == nil {
+		m.sorted = make(map[*report.Node]bool)
+	}
+
+	sortChildren(node.Children, m.sortByName)
+	m.sorted[node] = true
+}
+
+// cur returns the top of the navigation stack, or nil when there is none:
+// before a scan finishes, and after a scan that failed outright.
+func (m *Model) cur() *entry {
+	if len(m.stack) == 0 {
+		return nil
+	}
+
+	return &m.stack[len(m.stack)-1]
+}
+
+// selected returns the node under the cursor, or nil when nothing is selected.
+func (m *Model) selected() *report.Node {
+	e := m.cur()
+	if e == nil || e.idx >= len(m.visible) {
+		return nil
+	}
+
+	return m.visible[e.idx]
+}
 
 func (m *Model) refreshVisible() {
-	node := m.cur().node
+	e := m.cur()
+	if e == nil {
+		m.visible = nil
 
-	children := node.Children
-	if m.showFiles {
-		m.visible = children
-	} else {
-		m.visible = m.visible[:0]
+		return
+	}
 
-		for _, c := range children {
-			if c.Dir {
-				m.visible = append(m.visible, c)
-			}
+	node := e.node
+	m.sortNode(node)
+
+	// Never let m.visible alias node.Children: the filtered branch reuses
+	// m.visible's backing array, which would overwrite the node's children.
+	m.visible = m.visible[:0]
+
+	for _, c := range node.Children {
+		if m.showFiles || c.Dir {
+			m.visible = append(m.visible, c)
 		}
 	}
 
-	m.cur().idx = min(m.cur().idx, max(len(m.visible)-1, 0))
+	e.idx = min(e.idx, max(len(m.visible)-1, 0))
 	m.yOff = min(m.yOff, max(len(m.visible)-m.listHeight(), 0))
 }
 
 func (m *Model) move(delta int) {
 	e := m.cur()
+	if e == nil {
+		return
+	}
+
 	e.idx = max(0, min(e.idx+delta, len(m.visible)-1))
 	m.ensureVisible()
 }
 
 func (m *Model) goInto() {
-	if len(m.visible) == 0 {
-		return
-	}
-
-	child := m.visible[m.cur().idx]
-	if !child.Dir {
+	child := m.selected()
+	if child == nil || !child.Dir {
 		return
 	}
 
@@ -212,12 +288,17 @@ func (m *Model) goUp() {
 func (m *Model) listHeight() int { return max(m.height-4, 1) }
 
 func (m *Model) ensureVisible() {
-	if m.cur().idx < m.yOff {
-		m.yOff = m.cur().idx
+	e := m.cur()
+	if e == nil {
+		return
 	}
 
-	if m.cur().idx >= m.yOff+m.listHeight() {
-		m.yOff = m.cur().idx - m.listHeight() + 1
+	if e.idx < m.yOff {
+		m.yOff = e.idx
+	}
+
+	if e.idx >= m.yOff+m.listHeight() {
+		m.yOff = e.idx - m.listHeight() + 1
 	}
 }
 
@@ -239,12 +320,12 @@ func (m *Model) View() string {
 }
 
 func (m *Model) pctOfParent(n *report.Node) float64 {
-	parent := m.cur().node
-	if parent.DiskUsage == 0 {
+	e := m.cur()
+	if e == nil || e.node.DiskUsage == 0 {
 		return 0
 	}
 
-	return 100 * float64(n.DiskUsage) / float64(parent.DiskUsage)
+	return 100 * float64(n.DiskUsage) / float64(e.node.DiskUsage)
 }
 
 func largestChild(visible []*report.Node) int64 {
@@ -297,7 +378,12 @@ func (m *Model) renderRow(child *report.Node, maxSize int64, width int, selected
 
 func (m *Model) viewBrowser() string {
 	width := m.width
-	crumb := lipgloss.NewStyle().MaxWidth(width).Render(m.renderBreadcrumb())
+	crumb := crumbStyle.MaxWidth(width).Render(m.renderBreadcrumb())
+
+	curIdx := -1
+	if e := m.cur(); e != nil {
+		curIdx = e.idx
+	}
 
 	var b strings.Builder
 	b.WriteString(crumb + "\n")
@@ -309,7 +395,7 @@ func (m *Model) viewBrowser() string {
 	rows := 0
 
 	for i := m.yOff; i < end; i++ {
-		b.WriteString(m.renderRow(m.visible[i], maxSize, width, i == m.cur().idx) + "\n")
+		b.WriteString(m.renderRow(m.visible[i], maxSize, width, i == curIdx) + "\n")
 
 		rows++
 	}
@@ -357,11 +443,18 @@ func (m *Model) statusLine() string {
 	total := fmt.Sprintf("%s in %d dirs · %d files · %s",
 		scanner.HumanBytes(m.stats.BytesDisk), m.stats.DirsScanned, m.stats.FilesSeen,
 		m.elapsed.Round(time.Second))
-	if len(m.visible) == 0 {
-		return total
+	if m.unreadable > 0 {
+		total += fmt.Sprintf(" · %d unreadable", m.unreadable)
 	}
 
-	sel := m.visible[m.cur().idx]
+	if m.interrupted {
+		total += " (partial)"
+	}
+
+	sel := m.selected()
+	if sel == nil {
+		return truncate(total, m.width)
+	}
 
 	detail := fmt.Sprintf("%s disk · %s apparent", scanner.HumanBytes(sel.DiskUsage), scanner.HumanBytes(sel.ApparentSize))
 	if sel.Dir {
@@ -381,7 +474,7 @@ func (m *Model) helpBlock() string {
 		"q              quit",
 	}
 
-	return lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(0, 1).Render(strings.Join(lines, "\n"))
+	return helpStyle.Render(strings.Join(lines, "\n"))
 }
 
 func sizeBar(frac float64, w int) string {
@@ -442,6 +535,12 @@ var (
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).
 			Padding(1, 2)
+
+	// crumbStyle and helpStyle carry no fixed rules of their own beyond what
+	// they set here; crumbStyle takes the terminal width at render time, and
+	// lipgloss setters copy, so the shared value is never mutated.
+	crumbStyle = lipgloss.NewStyle()
+	helpStyle  = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(0, 1)
 
 	statusStyle = lipgloss.NewStyle().Reverse(true).Bold(true)
 	footerStyle = lipgloss.NewStyle().Faint(true)

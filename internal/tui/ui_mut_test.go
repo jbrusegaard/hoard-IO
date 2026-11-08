@@ -106,24 +106,38 @@ func TestRenderRowZeroMaxSizeNoPanic(t *testing.T) {
 func TestShowFilesToggle(t *testing.T) {
 	m := browsedModel(t)
 
-	withFiles := len(m.visible)
-	if withFiles < 2 {
-		t.Fatalf("fixture should list several entries, got %d", withFiles)
+	// Enter "sub", where a file sorts before the dir; when the visible list
+	// aliases node.Children, the filtered pass overwrites node.Children and
+	// the second toggle renders corrupted entries.
+	m.Update(key("enter"))
+
+	withFiles := visibleNames(m)
+	if len(withFiles) < 2 {
+		t.Fatalf("fixture should list several entries, got %d", len(withFiles))
 	}
 
 	m.Update(key("f"))
 
 	without := len(m.visible)
 
-	if without >= withFiles {
-		t.Errorf("hide files: %d -> %d entries (want fewer)", withFiles, without)
+	if without >= len(withFiles) {
+		t.Errorf("hide files: %d -> %d entries (want fewer)", len(withFiles), without)
 	}
 
 	m.Update(key("f"))
 
-	if len(m.visible) != withFiles {
-		t.Errorf("restore files: got %d want %d", len(m.visible), withFiles)
+	if got := visibleNames(m); strings.Join(got, ",") != strings.Join(withFiles, ",") {
+		t.Errorf("restore files: got %v want %v", got, withFiles)
 	}
+}
+
+func visibleNames(m *Model) []string {
+	names := make([]string, 0, len(m.visible))
+	for _, v := range m.visible {
+		names = append(names, v.Name)
+	}
+
+	return names
 }
 
 func TestHelpOverlayToggles(t *testing.T) {

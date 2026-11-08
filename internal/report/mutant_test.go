@@ -3,6 +3,7 @@ package report
 import (
 	"bytes"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -182,6 +183,43 @@ func TestSortByNameDirsFirstCaseInsensitive(t *testing.T) {
 	for i, w := range want {
 		if n.Children[i].Name != w {
 			t.Fatalf("SortByName order %d: want %v, got %v", i, want, names(n.Children))
+		}
+	}
+}
+
+// TestSortByNameCaseInsensitiveTiesStable covers a same-word case group: keys
+// compare lowercased, ties keep insertion order, and a renamed node gets a
+// fresh key instead of a stale one.
+func TestSortByNameCaseInsensitiveTiesStable(t *testing.T) {
+	apple := &Node{Name: "Apple", DiskUsage: 3}
+	banana := &Node{Name: "banana", DiskUsage: 2}
+	shouty := &Node{Name: "APPLE", DiskUsage: 1}
+	lower := &Node{Name: "apple", DiskUsage: 4}
+	n := &Node{Name: mntRoot, Dir: true, Children: []*Node{apple, banana, shouty, lower}}
+
+	SortByName(n)
+
+	want := []*Node{apple, shouty, lower, banana}
+	if !slices.Equal(n.Children, want) {
+		t.Fatalf("SortByName order: want %v, got %v", names(want), names(n.Children))
+	}
+
+	apple.Name = "zebra"
+	SortByName(n)
+
+	renamed := []*Node{shouty, lower, banana, apple}
+	if !slices.Equal(n.Children, renamed) {
+		t.Fatalf("sort after rename: want %v, got %v", names(renamed), names(n.Children))
+	}
+
+	var buf bytes.Buffer
+	if err := JSON(&buf, &Tree{Root: n}, &scanner.Result{Root: mntRoot}); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, field := range []string{"sortKey", "childIdx"} {
+		if strings.Contains(buf.String(), field) {
+			t.Errorf("JSON leaked internal field %q:\n%s", field, buf.String())
 		}
 	}
 }

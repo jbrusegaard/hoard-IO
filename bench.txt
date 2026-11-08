@@ -1,0 +1,82 @@
+PASS
+ok  	github.com/jbrusegaard/hoardio/cmd/hoardio	0.190s
+goos: darwin
+goarch: arm64
+pkg: github.com/jbrusegaard/hoardio/internal/report
+cpu: Apple M1 Pro
+BenchmarkBuild-10             	      57	  20717180 ns/op	15962993 B/op	  152698 allocs/op
+BenchmarkBuild-10             	      57	  20581413 ns/op	15962993 B/op	  152698 allocs/op
+BenchmarkBuild-10             	      57	  20515303 ns/op	15963089 B/op	  152698 allocs/op
+BenchmarkSortBySize-10        	    3308	    344669 ns/op	  114296 B/op	    4082 allocs/op
+BenchmarkSortBySize-10        	    3241	    349227 ns/op	  114296 B/op	    4082 allocs/op
+BenchmarkSortBySize-10        	    3244	    350049 ns/op	  114296 B/op	    4082 allocs/op
+BenchmarkSortByName-10        	     532	   2241672 ns/op	  114296 B/op	    4082 allocs/op
+BenchmarkSortByName-10        	     526	   2278779 ns/op	  114296 B/op	    4082 allocs/op
+BenchmarkSortByName-10        	     534	   2242416 ns/op	  114296 B/op	    4082 allocs/op
+BenchmarkTopFiles-10          	      58	  20504510 ns/op	13753801 B/op	      29 allocs/op
+BenchmarkTopFiles-10          	      58	  20450157 ns/op	13753800 B/op	      29 allocs/op
+BenchmarkTopFiles-10          	      58	  20622735 ns/op	13753801 B/op	      29 allocs/op
+BenchmarkRelCost-10           	 7585863	       156.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkRelCost-10           	 7622180	       157.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkRelCost-10           	 7631343	       157.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTrimPrefixCost-10    	1000000000	         0.4690 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTrimPrefixCost-10    	1000000000	         0.4685 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTrimPrefixCost-10    	1000000000	         0.4732 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/jbrusegaard/hoardio/internal/report	22.231s
+goos: darwin
+goarch: arm64
+pkg: github.com/jbrusegaard/hoardio/internal/scanner
+cpu: Apple M1 Pro
+BenchmarkScanDirHeavy-10            	      16	  69047703 ns/op	25440500 B/op	  199457 allocs/op
+BenchmarkScanDirHeavy-10            	      16	  68527089 ns/op	25395710 B/op	  199461 allocs/op
+BenchmarkScanDirHeavy-10            	      16	  76657997 ns/op	25407603 B/op	  199455 allocs/op
+BenchmarkScanFixture-10             	      10	 105995500 ns/op	52685755 B/op	  409375 allocs/op
+BenchmarkScanFixture-10             	      10	 106204608 ns/op	52735212 B/op	  409376 allocs/op
+BenchmarkScanFixture-10             	      10	 106592546 ns/op	52656417 B/op	  409368 allocs/op
+BenchmarkScanWorkers/1-10           	       4	 259561219 ns/op	52656240 B/op	  409345 allocs/op
+BenchmarkScanWorkers/1-10           	       4	 262360104 ns/op	52642572 B/op	  409344 allocs/op
+BenchmarkScanWorkers/1-10           	       4	 262883385 ns/op	52615280 B/op	  409342 allocs/op
+BenchmarkScanWorkers/2-10           	       7	 158808202 ns/op	52637099 B/op	  409346 allocs/op
+BenchmarkScanWorkers/2-10           	       7	 159139881 ns/op	52700109 B/op	  409357 allocs/op
+BenchmarkScanWorkers/2-10           	       7	 157684327 ns/op	52751542 B/op	  409355 allocs/op
+BenchmarkScanWorkers/4-10           	       8	 140112969 ns/op	52581326 B/op	  409351 allocs/op
+BenchmarkScanWorkers/4-10           	       8	 137360599 ns/op	52653740 B/op	  409355 allocs/op
+BenchmarkScanWorkers/4-10           	       8	 134637771 ns/op	52699602 B/op	  409361 allocs/op
+BenchmarkScanWorkers/8-10           	      10	 107035583 ns/op	52666030 B/op	  409363 allocs/op
+BenchmarkScanWorkers/8-10           	      10	 107995942 ns/op	52673728 B/op	  409369 allocs/op
+BenchmarkScanWorkers/8-10           	      10	 108134704 ns/op	52652668 B/op	  409358 allocs/op
+BenchmarkScanWorkers/16-10          	      10	 105621192 ns/op	52619085 B/op	  409360 allocs/op
+BenchmarkScanWorkers/16-10          	      10	 105471096 ns/op	52668869 B/op	  409370 allocs/op
+BenchmarkScanWorkers/16-10          	      10	 106199188 ns/op	52673662 B/op	  409365 allocs/op
+BenchmarkScanWorkers/32-10          	      10	 105062883 ns/op	52678788 B/op	  409381 allocs/op
+BenchmarkScanWorkers/32-10          	      10	 107349721 ns/op	52702056 B/op	  409392 allocs/op
+BenchmarkScanWorkers/32-10          	      10	 107494088 ns/op	52709937 B/op	  409386 allocs/op
+BenchmarkReadDirOnly-10             	      19	  57031397 ns/op	 9518531 B/op	  154662 allocs/op
+BenchmarkReadDirOnly-10             	      19	  56001750 ns/op	 9518546 B/op	  154662 allocs/op
+BenchmarkReadDirOnly-10             	      20	  55566938 ns/op	 9518527 B/op	  154662 allocs/op
+BenchmarkEntryInfo-10               	   15813	     75002 ns/op	   14024 B/op	     167 allocs/op
+BenchmarkEntryInfo-10               	   15861	     75599 ns/op	   14024 B/op	     167 allocs/op
+BenchmarkEntryInfo-10               	   16024	     75379 ns/op	   14024 B/op	     167 allocs/op
+BenchmarkLstatReuse-10              	   25342	     47527 ns/op	    7952 B/op	      62 allocs/op
+BenchmarkLstatReuse-10              	   23256	     47397 ns/op	    7952 B/op	      62 allocs/op
+BenchmarkLstatReuse-10              	   24945	     48814 ns/op	    7952 B/op	      62 allocs/op
+BenchmarkPathJoinVsConcat/filepath.Join-10         	 4750460	       252.2 ns/op	     112 B/op	       1 allocs/op
+BenchmarkPathJoinVsConcat/filepath.Join-10         	 4760456	       252.2 ns/op	     112 B/op	       1 allocs/op
+BenchmarkPathJoinVsConcat/filepath.Join-10         	 4773582	       251.9 ns/op	     112 B/op	       1 allocs/op
+BenchmarkPathJoinVsConcat/concat-10                	33116085	        36.30 ns/op	     112 B/op	       1 allocs/op
+BenchmarkPathJoinVsConcat/concat-10                	33040556	        35.90 ns/op	     112 B/op	       1 allocs/op
+BenchmarkPathJoinVsConcat/concat-10                	33572967	        36.34 ns/op	     112 B/op	       1 allocs/op
+BenchmarkHardlinkSeenSerial-10                     	11528466	       146.1 ns/op	      77 B/op	       0 allocs/op
+BenchmarkHardlinkSeenSerial-10                     	11474222	       147.8 ns/op	      77 B/op	       0 allocs/op
+BenchmarkHardlinkSeenSerial-10                     	11995206	       146.8 ns/op	      74 B/op	       0 allocs/op
+BenchmarkHardlinkSeenParallel-10                   	 3383852	       409.4 ns/op	      66 B/op	       0 allocs/op
+BenchmarkHardlinkSeenParallel-10                   	 3362191	       403.6 ns/op	      66 B/op	       0 allocs/op
+BenchmarkHardlinkSeenParallel-10                   	 3300513	       408.4 ns/op	      67 B/op	       0 allocs/op
+BenchmarkExcluderMatchEmpty-10                     	589343682	         2.038 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExcluderMatchEmpty-10                     	590679325	         2.030 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExcluderMatchEmpty-10                     	589633986	         2.030 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/jbrusegaard/hoardio/internal/scanner	117.093s
+PASS
+ok  	github.com/jbrusegaard/hoardio/internal/tui	0.167s
