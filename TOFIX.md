@@ -161,7 +161,8 @@ the scan goroutine are no-ops, not panics.
 - **If we skip it:** Next reader wastes time hunting which code path uses it;
   one of them is `walk`.
 
-### [ ] 9. `revive.toml` configures a linter this repo never runs (repo root)
+### [x] 9. `revive.toml` configures a linter this repo never runs (repo root)
+> **Fixed 2026-11-09:** deleted in bde34e9; `.golangci.yml` is the single source of revive rules.
 
 - **What this is:** A standalone `revive` config file.
 - **Problem:** `make lint` runs `golangci-lint` + `go vet` only; no target,
