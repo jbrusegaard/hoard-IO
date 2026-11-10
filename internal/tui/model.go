@@ -357,6 +357,11 @@ func (m *Model) statusLine() string {
 	total := fmt.Sprintf("%s in %d dirs · %d files · %s",
 		scanner.HumanBytes(m.stats.BytesDisk), m.stats.DirsScanned, m.stats.FilesSeen,
 		m.elapsed.Round(time.Second))
+	if m.interrupted {
+		// The scan was cancelled mid-flight; sizes below are lower bounds.
+		total += " · partial"
+	}
+
 	if len(m.visible) == 0 {
 		return total
 	}

@@ -172,3 +172,18 @@ func TestScanFailureView(t *testing.T) {
 }
 
 var errBoom = errors.New("boom")
+
+func TestInterruptedScanMarkedPartial(t *testing.T) {
+	m := New()
+	m.height = 24
+	m.width = 80
+	_, _ = m.Update(doneMsg{tree: mkTree(t), stats: scanner.Stats{FilesSeen: 2}, interrupted: true})
+
+	if status := m.statusLine(); !strings.Contains(status, "partial") {
+		t.Errorf("interrupted scan status should say partial: %q", status)
+	}
+
+	if status := browsedModel(t).statusLine(); strings.Contains(status, "partial") {
+		t.Errorf("clean scan should not say partial: %q", status)
+	}
+}

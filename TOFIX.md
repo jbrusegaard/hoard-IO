@@ -96,7 +96,8 @@ the scan goroutine are no-ops, not panics.
   nicer UX.)
 - **If we skip it:** Documented behavior doesn't exist; the filter flags lie.
 
-### [ ] 5. A scan the user interrupted shows up as if it were complete (`internal/tui/model.go:112-122`)
+### [x] 5. A scan the user interrupted shows up as if it were complete (`internal/tui/model.go:112-122`)
+> **Fixed 2026-11-09:** status line appends `· partial` when interrupted; tested both ways.
 
 - **What this is:** Ctrl+C during a TUI scan cancels the scan; hoardio keeps
   the partial results, which is right.
