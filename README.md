@@ -75,11 +75,15 @@ make install # into $GOBIN
 hoardio                  # scan $HOME, open the interactive browser
 hoardio ~/Downloads      # scan a specific path
 hoardio --top 20         # plain report: top 20 largest entries (implies --text)
-hoardio --min-size 1G    # only show entries at least this large
+hoardio --min-size 1G    # only show entries at least this large (implies --text)
 hoardio --exclude .git --exclude node_modules   # glob against base name or full path
 hoardio --xdev           # don't cross filesystem boundaries
 hoardio --json           # machine-readable output (implies --text)
 ```
+
+Base-name patterns (no `/`) match at any depth, so `--exclude node_modules`
+prunes every such directory wherever it sits. A full-path glob matches only its
+exact depth (`*` never crosses a `/`), so prefer base names to prune trees.
 
 The interactive browser opens when stdin and stdout are terminals; piped
 output falls back to the plain report automatically (`--text` forces it).
