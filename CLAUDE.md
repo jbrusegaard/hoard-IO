@@ -39,7 +39,7 @@ Individual checks (all must pass):
 ```
 make lint            # golangci-lint v2 (40 linters) + go vet
 make test            # go test -race -shuffle=on ./...
-make coverage        # coverage gate (threshold: 70%, raise to 80% as cmd/ matures)
+make coverage        # coverage gate (threshold: 80%)
 make patch-coverage  # changed-lines coverage (threshold: 80%; skips gracefully without git)
 make security        # gosec + govulncheck (tools installed separately)
 make mutation        # gremlins (threshold: 60%)
@@ -57,7 +57,7 @@ make profile         # CPU + memory profiles for pprof
 
 ## Code Quality Thresholds
 
-- Test coverage: >=70% overall (internal/* already at ~82%; raise the gate to 80% once cmd/ is tested)
+- Test coverage: >=80% overall
 - Mutation score: >=60%
 - Cyclomatic complexity: <=10 per function
 - Cognitive complexity: <=15 per function

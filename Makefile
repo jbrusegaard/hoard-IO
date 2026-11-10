@@ -12,7 +12,7 @@ CROSS_TARGETS := darwin/arm64 darwin/amd64 linux/amd64 linux/arm64 windows/amd64
                  freebsd/amd64 netbsd/amd64 openbsd/amd64 dragonfly/amd64 \
                  solaris/amd64 aix/ppc64
 
-COVERAGE_THRESHOLD := 70 # raise toward 80 as cmd/ gains tests
+COVERAGE_THRESHOLD := 80
 PATCH_THRESHOLD    := 80
 MUTATION_THRESHOLD := 60
 
