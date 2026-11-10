@@ -275,11 +275,17 @@ func isTerminal(f *os.File) bool {
 
 var sizeUnits = map[string]int64{"K": 1 << 10, "M": 1 << 20, "G": 1 << 30, "T": 1 << 40}
 
-// parseSize accepts "512", "10M", "1.5G" (binary units).
+// parseSize accepts "512", "10M", "1.5G", and the redundant-byte forms "10MB",
+// "1.5GB" (binary units). A trailing B/b is dropped before the unit lookup so
+// "10M" and "10MB" mean the same thing; a lone "B" stays an error.
 func parseSize(s string) (int64, error) {
 	s = strings.TrimSpace(s)
 	if s == "" || s == "0" {
 		return 0, nil
+	}
+
+	if len(s) > 1 && (s[len(s)-1] == 'b' || s[len(s)-1] == 'B') {
+		s = strings.TrimSpace(s[:len(s)-1])
 	}
 
 	var mult int64 = 1
