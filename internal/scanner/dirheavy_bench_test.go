@@ -43,18 +43,16 @@ func buildDHFixture() error {
 		mu.Unlock()
 	}
 	var wg sync.WaitGroup
-	for i := 0; i < dhL1; i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
+	for i := range dhL1 {
+		wg.Go(func() {
 			l1 := filepath.Join(dhFixtureRoot, fmt.Sprintf("d%02d", i))
-			for j := 0; j < dhL2; j++ {
+			for j := range dhL2 {
 				dir := filepath.Join(l1, fmt.Sprintf("s%02d", j))
 				if err := os.MkdirAll(dir, 0o755); err != nil {
 					fail(err)
 					return
 				}
-				for k := 0; k < dhFiles; k++ {
+				for k := range dhFiles {
 					p := filepath.Join(dir, fmt.Sprintf("f%d.bin", k))
 					f, err := os.OpenFile(p, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 					if err != nil {
@@ -65,7 +63,7 @@ func buildDHFixture() error {
 					f.Close()
 				}
 			}
-		}(i)
+		})
 	}
 	wg.Wait()
 	if firstErr != nil {
@@ -89,7 +87,7 @@ func BenchmarkScanDirHeavy(b *testing.B) {
 	ctx := context.Background()
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		res, err := Scan(ctx, root, &Options{})
 		if err != nil || res.Err != nil {
 			b.Fatal(err)

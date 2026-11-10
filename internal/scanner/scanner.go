@@ -46,7 +46,7 @@ type Stats struct {
 	FilesSeen   int64 `json:"filesSeen"`
 	BytesDisk   int64 `json:"bytesDisk"`
 	Skipped     int64 `json:"skipped"` // entries excluded via patterns; dirs also counted when filtered by XDev
-	Other       int64 `json:"other"`   // sockets, fifos, devices: counted but not sized
+	Other       int64 `json:"other"`   // sockets, fifos, devices, and entries that vanished before stat: counted but not sized
 }
 
 // Result holds the outcome of a scan. Partial results are returned when the
@@ -154,11 +154,7 @@ func Scan(ctx context.Context, root string, opts *Options) (*Result, error) {
 func startWriter(files <-chan File, res *Result, mu *sync.Mutex) func() {
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		for f := range files {
 			mu.Lock()
 
@@ -166,7 +162,7 @@ func startWriter(files <-chan File, res *Result, mu *sync.Mutex) func() {
 
 			mu.Unlock()
 		}
-	}()
+	})
 
 	return wg.Wait
 }
@@ -176,13 +172,7 @@ func runWorkers(workers int, w *walker, record func(dirTask, error)) {
 	var wg sync.WaitGroup
 
 	for range workers {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
-			w.drain(record)
-		}()
+		wg.Go(func() { w.drain(record) })
 	}
 
 	wg.Wait()

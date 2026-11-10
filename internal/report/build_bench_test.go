@@ -12,11 +12,11 @@ import (
 // genFiles builds a synthetic flat scan result: l1 x l2 dirs, n files each.
 func genFiles(root string, l1, l2, n int) []scanner.File {
 	files := make([]scanner.File, 0, l1*l2*n)
-	for i := 0; i < l1; i++ {
+	for i := range l1 {
 		d1 := fmt.Sprintf("d%02d", i)
-		for j := 0; j < l2; j++ {
+		for j := range l2 {
 			d2 := fmt.Sprintf("s%02d", j)
-			for k := 0; k < n; k++ {
+			for k := range n {
 				name := fmt.Sprintf("f%03d.bin", k)
 				rel := d1 + "/" + d2 + "/" + name
 				files = append(files, scanner.File{
@@ -36,7 +36,7 @@ var benchFiles = genFiles(benchRoot, 40, 50, 30) // ~60k files, 2000 dirs
 
 func BenchmarkBuild(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		t := Build(benchRoot, benchFiles)
 		if t.Root.DiskUsage == 0 {
 			b.Fatal("empty tree")
@@ -48,7 +48,7 @@ func BenchmarkSortBySize(b *testing.B) {
 	t := Build(benchRoot, benchFiles)
 	b.ResetTimer()
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		SortBySize(t.Root)
 	}
 }
@@ -57,14 +57,14 @@ func BenchmarkSortByName(b *testing.B) {
 	t := Build(benchRoot, benchFiles)
 	b.ResetTimer()
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		SortByName(t.Root)
 	}
 }
 
 func BenchmarkTopFiles(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		top := topFiles(benchFiles, 30, 0)
 		if len(top) != 30 {
 			b.Fatalf("top=%d", len(top))

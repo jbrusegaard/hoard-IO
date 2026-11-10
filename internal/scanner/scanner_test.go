@@ -131,9 +131,9 @@ func TestWideFanOutCompletes(t *testing.T) {
 	// deadlock (every worker blocks on send, nobody receives).
 	root := t.TempDir()
 	total := 0
-	for i := 0; i < 6; i++ {
-		for j := 0; j < 6; j++ {
-			for k := 0; k < 6; k++ {
+	for i := range 6 {
+		for j := range 6 {
+			for k := range 6 {
 				dir := filepath.Join(root, fmt.Sprintf("a%d", i), fmt.Sprintf("b%d", j), fmt.Sprintf("c%d", k))
 				writeFile(t, filepath.Join(dir, "f.bin"), 512)
 				total += 3 // a, b, c dirs per leaf chain below root level counted separately
@@ -155,7 +155,7 @@ func TestWideFanOutCompletes(t *testing.T) {
 
 func TestCancelStopsScan(t *testing.T) {
 	root := t.TempDir()
-	for i := 0; i < 50; i++ { // enough dirs that a cancelled scan is meaningful
+	for i := range 50 { // enough dirs that a cancelled scan is meaningful
 		name := fmt.Sprintf("d%02d", i)
 		writeFile(t, filepath.Join(root, name, "f.bin"), 512)
 	}

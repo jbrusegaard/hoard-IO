@@ -300,7 +300,8 @@ func (m *Model) viewBrowser() string {
 	crumb := lipgloss.NewStyle().MaxWidth(width).Render(m.renderBreadcrumb())
 
 	var b strings.Builder
-	b.WriteString(crumb + "\n")
+	b.WriteString(crumb)
+	b.WriteString("\n")
 
 	maxSize := largestChild(m.visible)
 
@@ -309,14 +310,16 @@ func (m *Model) viewBrowser() string {
 	rows := 0
 
 	for i := m.yOff; i < end; i++ {
-		b.WriteString(m.renderRow(m.visible[i], maxSize, width, i == m.cur().idx) + "\n")
+		b.WriteString(m.renderRow(m.visible[i], maxSize, width, i == m.cur().idx))
+		b.WriteString("\n")
 
 		rows++
 	}
 
 	for r := rows; r < listH; r++ {
 		if rows == 0 && r == 0 {
-			b.WriteString(emptyStyle.Render("(empty)") + "\n")
+			b.WriteString(emptyStyle.Render("(empty)"))
+			b.WriteString("\n")
 		} else {
 			b.WriteString("\n")
 		}

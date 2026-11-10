@@ -95,7 +95,7 @@ func BenchmarkScanFixture(b *testing.B) {
 	ctx := context.Background()
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		res, err := Scan(ctx, root, &Options{})
 		if err != nil {
 			b.Fatal(err)
@@ -113,7 +113,7 @@ func BenchmarkScanWorkers(b *testing.B) {
 		b.Run(fmt.Sprint(w), func(b *testing.B) {
 			b.ReportAllocs()
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				if _, err := Scan(ctx, root, &Options{Workers: w}); err != nil {
 					b.Fatal(err)
 				}
@@ -126,7 +126,7 @@ func BenchmarkScanWorkers(b *testing.B) {
 func BenchmarkReadDirOnly(b *testing.B) {
 	root := setupFixture(b)
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		stack := []string{root}
 		n := 0
 		for len(stack) > 0 {
@@ -157,7 +157,7 @@ func BenchmarkEntryInfo(b *testing.B) {
 	root := setupFixture(b)
 	dir := filepath.Join(root, "d00", "s00") // 31 entries incl. dup link
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		entries, err := os.ReadDir(dir)
 		if err != nil {
 			b.Fatal(err)
@@ -192,7 +192,7 @@ func BenchmarkLstatReuse(b *testing.B) {
 		paths[i] = dir + "/" + e.Name()
 	}
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		var sum int64
 		for _, p := range paths {
 			info, err := os.Lstat(p)
@@ -216,7 +216,7 @@ func BenchmarkPathJoinVsConcat(b *testing.B) {
 	b.Run("filepath.Join", func(b *testing.B) {
 		b.ReportAllocs()
 		var sink string
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			sink = filepath.Join(dir, name)
 		}
 		_ = sink
@@ -224,7 +224,7 @@ func BenchmarkPathJoinVsConcat(b *testing.B) {
 	b.Run("concat", func(b *testing.B) {
 		b.ReportAllocs()
 		var sink string
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			sink = dir + "/" + name
 		}
 		_ = sink
@@ -257,7 +257,7 @@ func BenchmarkHardlinkSeenParallel(b *testing.B) {
 func BenchmarkExcluderMatchEmpty(b *testing.B) {
 	e := newExcluder(nil)
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		if e.match("f001.bin", "/tmp/a/b/f001.bin") {
 			b.Fatal("unexpected match")
 		}
