@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"flag"
+	"testing"
+)
 
 func TestParseSize(t *testing.T) {
 	cases := []struct {
@@ -34,5 +37,37 @@ func TestParseSize(t *testing.T) {
 		if got != c.want {
 			t.Errorf("parseSize(%q) = %d, want %d", c.in, got, c.want)
 		}
+	}
+}
+
+func TestTextForced(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+		want bool
+	}{
+		{"no flags", nil, false},
+		{"top set", []string{"-top", "20"}, true},
+		{"min-size set", []string{"-min-size", "1G"}, true},
+		{"tree-depth set", []string{"-tree-depth", "3"}, true},
+		{"unrelated flag set", []string{"-workers", "4"}, false},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			fs := flag.NewFlagSet("hoardio", flag.ContinueOnError)
+			fs.Int("top", 30, "")
+			fs.String("min-size", "0", "")
+			fs.Int("tree-depth", 2, "")
+			fs.Int("workers", 0, "")
+
+			if err := fs.Parse(c.args); err != nil {
+				t.Fatal(err)
+			}
+
+			if got := textForced(fs); got != c.want {
+				t.Errorf("textForced(%v) = %v, want %v", c.args, got, c.want)
+			}
+		})
 	}
 }

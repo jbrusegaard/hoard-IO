@@ -80,7 +80,9 @@ the scan goroutine are no-ops, not panics.
 
 ## Should fix
 
-### [ ] 4. `--top` does not imply `--text`, and `--top`/`--min-size`/`--tree-depth` are silently ignored in TUI mode (`cmd/hoardio/main.go:151-164`)
+### [x] 4. `--top` does not imply `--text`, and `--top`/`--min-size`/`--tree-depth` are silently ignored in TUI mode (`cmd/hoardio/main.go:151-164`)
+> **Fixed 2026-11-09:** `textForced()` opts out of the TUI when any report-shaping
+> flag is set; `--help` now says so; TestTextForced covers the rule.
 
 - **What this is:** README says `hoardio --top 20` gives a plain top-20 report
   "(implies --text)".

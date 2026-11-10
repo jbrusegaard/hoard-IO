@@ -117,12 +117,12 @@ type textFlags struct {
 func run() error {
 	var (
 		excludes   excludedirs
-		top        = flag.Int("top", 30, "number of largest files to list")
-		minSize    = flag.String("min-size", "0", "hide entries below this size (e.g. 10M, 1.5G)")
+		top        = flag.Int("top", 30, "number of largest files to list (implies --text)")
+		minSize    = flag.String("min-size", "0", "hide entries below this size, e.g. 10M, 1.5G (implies --text)")
 		xdev       = flag.Bool("xdev", false, "stay on one filesystem (skip other st_dev)")
 		jsonOut    = flag.Bool("json", false, "emit the full tree as JSON")
 		workers    = flag.Int("workers", 0, "scan worker goroutines (default 2x CPU cores)")
-		depth      = flag.Int("tree-depth", 2, "directory tree levels to render")
+		depth      = flag.Int("tree-depth", 2, "directory tree levels to render (implies --text)")
 		noProgress = flag.Bool("no-progress", false, "disable the progress line (text mode)")
 		textOut    = flag.Bool("text", false, "force the plain text report instead of the interactive TUI")
 		showVer    = flag.Bool("version", false, "print version and exit")
@@ -150,7 +150,7 @@ func run() error {
 
 	scanOpts := &scanner.Options{Workers: *workers, XDev: *xdev, Excludes: excludes}
 
-	useTUI := !*jsonOut && !*textOut && isTerminal(os.Stdin) && isTerminal(os.Stdout)
+	useTUI := !*jsonOut && !*textOut && !textForced(flag.CommandLine) && isTerminal(os.Stdin) && isTerminal(os.Stdout)
 	if useTUI {
 		if err := runTUI(root, scanOpts, nil, nil); err != nil {
 			return fmt.Errorf("tui: %w", err)
@@ -162,6 +162,22 @@ func run() error {
 	tf := textFlags{top: *top, minDisk: minDisk, depth: *depth, json: *jsonOut, noProgress: *noProgress, excludes: excludes}
 
 	return runText(root, scanOpts, tf)
+}
+
+// textForced reports whether a flag that only shapes the plain report was set
+// explicitly. The README promises "hoardio --top 20" gives a plain report, so
+// those flags opt out of the interactive browser rather than being ignored.
+func textForced(fs *flag.FlagSet) bool {
+	forced := false
+
+	fs.Visit(func(f *flag.Flag) {
+		switch f.Name {
+		case "top", "min-size", "tree-depth":
+			forced = true
+		}
+	})
+
+	return forced
 }
 
 func usage() {
