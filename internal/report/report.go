@@ -241,7 +241,7 @@ func writeSummary(w io.Writer, t *Tree, res *scanner.Result, opts Options) error
 	}
 
 	if n := len(res.Errors); n > 0 {
-		return fprintf(w, "summary", "%d directories could not be read (see --errors or JSON output)\n", n)
+		return fprintf(w, "summary", "%d directories could not be read (listed below)\n", n)
 	}
 
 	return nil

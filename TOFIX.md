@@ -110,7 +110,8 @@ the scan goroutine are no-ops, not panics.
 - **If we skip it:** Someone decides to delete 200 GiB based on a scan that
   covered a third of their home.
 
-### [ ] 6. The report points at a `--errors` flag that doesn't exist (`internal/report/report.go:184`)
+### [x] 6. The report points at a `--errors` flag that doesn't exist (`internal/report/report.go:184`)
+> **Fixed 2026-11-09:** summary now says "listed below" - which is where they actually are.
 
 - **What this is:** When directories are unreadable, the summary prints
   "see --errors or JSON output".
