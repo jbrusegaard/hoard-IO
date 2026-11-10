@@ -172,7 +172,9 @@ the scan goroutine are no-ops, not panics.
   revive") is the only thing keeping it alive.
 - **If we skip it:** Someone edits it, nothing changes, confusion follows.
 
-### [ ] 10. Duplicate defaults and a duplicated make target (`cmd/hoardio/main.go:120,126` vs `internal/report/report.go:136-141`; `Makefile:120-121`)
+### [x] 10. Duplicate defaults and a duplicated make target (`cmd/hoardio/main.go:120,126` vs `internal/report/report.go:136-141`; `Makefile:120-121`)
+> **Fixed 2026-11-09:** `report.DefaultTopFiles`/`DefaultTreeDepth` are the single source;
+> main's flag defaults reference them; `make race` is now an alias of `make test`.
 
 - **What this is:** "top 30" and "depth 2" defaults live in both `main.go` and
   `report.Text`; `make race` re-runs exactly what `make test` already does

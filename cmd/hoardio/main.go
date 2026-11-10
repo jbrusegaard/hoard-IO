@@ -117,12 +117,12 @@ type textFlags struct {
 func run() error {
 	var (
 		excludes   excludedirs
-		top        = flag.Int("top", 30, "number of largest files to list (implies --text)")
+		top        = flag.Int("top", report.DefaultTopFiles, "number of largest files to list (implies --text)")
 		minSize    = flag.String("min-size", "0", "hide entries below this size, e.g. 10M, 1.5G (implies --text)")
 		xdev       = flag.Bool("xdev", false, "stay on one filesystem (skip other st_dev)")
 		jsonOut    = flag.Bool("json", false, "emit the full tree as JSON")
 		workers    = flag.Int("workers", 0, "scan worker goroutines (default 2x CPU cores)")
-		depth      = flag.Int("tree-depth", 2, "directory tree levels to render (implies --text)")
+		depth      = flag.Int("tree-depth", report.DefaultTreeDepth, "directory tree levels to render (implies --text)")
 		noProgress = flag.Bool("no-progress", false, "disable the progress line (text mode)")
 		textOut    = flag.Bool("text", false, "force the plain text report instead of the interactive TUI")
 		showVer    = flag.Bool("version", false, "print version and exit")

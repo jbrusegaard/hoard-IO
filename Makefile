@@ -143,8 +143,8 @@ verify: lint test coverage patch-coverage security deadcode build-check cross
 check: vet
 	@test -z "$$(gofmt -l .)" || { gofmt -l .; echo "run 'make fmt'"; exit 1; }
 
-race:
-	go test -race -timeout 300s ./...
+# Alias: test already runs with -race. Kept so `make race` keeps working.
+race: test
 
 vet:
 	go vet ./...

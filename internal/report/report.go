@@ -182,22 +182,29 @@ func fprintf(w io.Writer, section, format string, a ...any) error {
 	return nil
 }
 
+// Defaults for Text rendering when Options leaves a field unset. Exported so
+// the CLI's flag defaults come from here too, keeping one source of truth.
+const (
+	DefaultTopFiles  = 30
+	DefaultTreeDepth = 2
+)
+
 // Options controls Text rendering.
 type Options struct {
-	TopFiles  int    // number of largest files to list; 0 = default 30
+	TopFiles  int    // number of largest files to list; 0 = DefaultTopFiles
 	MinDisk   int64  // hide entries below this many allocated bytes
-	TreeDepth int    // directory tree depth to render; 0 = default 2
+	TreeDepth int    // directory tree depth to render; 0 = DefaultTreeDepth
 	Duration  string // wall-clock scan time for the summary line
 }
 
 // Text renders the human-readable report: summary, directory tree, largest files.
 func Text(w io.Writer, t *Tree, res *scanner.Result, opts Options) error {
 	if opts.TopFiles <= 0 {
-		opts.TopFiles = 30
+		opts.TopFiles = DefaultTopFiles
 	}
 
 	if opts.TreeDepth <= 0 {
-		opts.TreeDepth = 2
+		opts.TreeDepth = DefaultTreeDepth
 	}
 
 	SortBySize(t.Root)
