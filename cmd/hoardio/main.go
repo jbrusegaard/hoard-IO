@@ -17,6 +17,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/mattn/go-isatty"
 
 	"github.com/jbrusegaard/hoardio/internal/report"
 	"github.com/jbrusegaard/hoardio/internal/scanner"
@@ -263,13 +264,13 @@ func renderReport(w, warn io.Writer, res *scanner.Result, tf textFlags, elapsed 
 	return nil
 }
 
+// isTerminal reports whether f is an interactive terminal. It cannot rely on
+// the char-device mode bit: /dev/null is a character device, so `hoardio
+// > /dev/null` would otherwise open an invisible TUI that swallows input.
+// go-isatty does the real tcgetattr; it is already in the module graph via
+// bubbletea.
 func isTerminal(f *os.File) bool {
-	info, err := f.Stat()
-	if err != nil {
-		return false
-	}
-
-	return info.Mode()&os.ModeCharDevice != 0
+	return isatty.IsTerminal(f.Fd())
 }
 
 var sizeUnits = map[string]int64{"K": 1 << 10, "M": 1 << 20, "G": 1 << 30, "T": 1 << 40}

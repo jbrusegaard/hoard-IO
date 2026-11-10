@@ -75,7 +75,9 @@ make profile         # CPU + memory profiles for pprof
    condvar task queue (`internal/scanner/queue.go`) replaced a bounded-channel
    design that DEADLOCKED on wide trees — do not regress it.
 6. **Dependencies**: minimal. bubbletea/lipgloss/go-runewidth for the TUI only;
-   `golang.org/x/sys/unix` only inside `stat_unix.go` (never in portable files).
+   `golang.org/x/sys/unix` only inside `stat_unix.go` (never in portable files);
+   `github.com/mattn/go-isatty` only in `cmd/hoardio` for terminal detection
+   (promoted from bubbletea's transitive dep - adds no new download).
    depguard blocks `io/ioutil` and `github.com/pkg/errors`.
 7. **Testing**: table-driven; property-style checks for pure functions; e2e
    test drives the real TUI through pipes (`cmd/hoardio/tui_e2e_test.go`).

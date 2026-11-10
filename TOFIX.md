@@ -203,7 +203,9 @@ the scan goroutine are no-ops, not panics.
   `return err` since `runTUI` already labels. One line.
 - **If we skip it:** Cosmetic; confused users only.
 
-### [ ] 12. `isTerminal` accepts `/dev/null` (`cmd/hoardio/main.go:252-259`)
+### [x] 12. `isTerminal` accepts `/dev/null` (`cmd/hoardio/main.go:252-259`)
+> **Fixed 2026-11-09:** `isatty.IsTerminal` (already in the graph) replaces the mode-bit
+> check; TestIsTerminalRejectsDevNull locks the case; CLAUDE.md dep policy updated.
 
 - **What this is:** TTY detection via `ModeCharDevice` to choose TUI vs text.
 - **Problem:** `/dev/null` is a character device, so `hoardio > /dev/null`

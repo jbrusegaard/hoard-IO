@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"os"
 	"testing"
 )
 
@@ -69,5 +70,19 @@ func TestTextForced(t *testing.T) {
 				t.Errorf("textForced(%v) = %v, want %v", c.args, got, c.want)
 			}
 		})
+	}
+}
+
+func TestIsTerminalRejectsDevNull(t *testing.T) {
+	// /dev/null has the char-device bit set; a Stat-based check wrongly calls
+	// it a terminal and opens an invisible TUI for `hoardio > /dev/null`.
+	devnull, err := os.Open(os.DevNull)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = devnull.Close() }()
+
+	if isTerminal(devnull) {
+		t.Errorf("isTerminal(%s) = true, want false", os.DevNull)
 	}
 }
