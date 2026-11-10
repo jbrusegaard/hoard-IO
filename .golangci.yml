@@ -82,7 +82,9 @@ linters:
             - pkg: github.com/pkg/errors
               desc: "Use fmt.Errorf with %w instead"
     revive:
-      # Mirrors revive.toml (used by the standalone `revive` CLI).
+      # Single source of truth for revive rules: the standalone revive CLI is
+      # not run in this repo (no make target, no CI), so there is no
+      # revive.toml to keep in sync.
       rules:
         - name: blank-imports
         - name: context-as-argument
