@@ -152,11 +152,9 @@ func run() error {
 
 	useTUI := !*jsonOut && !*textOut && !textForced(flag.CommandLine) && isTerminal(os.Stdin) && isTerminal(os.Stdout)
 	if useTUI {
-		if err := runTUI(root, scanOpts, nil, nil); err != nil {
-			return fmt.Errorf("tui: %w", err)
-		}
-
-		return nil
+		// runTUI already labels its errors with "tui:"; wrapping here twice
+		// printed "hoardio: tui: tui: ...".
+		return runTUI(root, scanOpts, nil, nil)
 	}
 
 	tf := textFlags{top: *top, minDisk: minDisk, depth: *depth, json: *jsonOut, noProgress: *noProgress, excludes: excludes}

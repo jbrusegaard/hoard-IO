@@ -192,7 +192,8 @@ the scan goroutine are no-ops, not panics.
 
 ## Nice to have
 
-### [ ] 11. Error prefix "tui:" is applied twice (`cmd/hoardio/main.go:71` and `:156`)
+### [x] 11. Error prefix "tui:" is applied twice (`cmd/hoardio/main.go:71` and `:156`)
+> **Fixed 2026-11-09:** `run` now returns `runTUI`'s error as-is; only the source labels it.
 
 - **What this is:** `runTUI` wraps its errors with `tui: %w`; `run` wraps
   `runTUI`'s return with `tui: %w` again.
