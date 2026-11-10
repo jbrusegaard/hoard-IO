@@ -40,7 +40,9 @@ the scan goroutine are no-ops, not panics.
 - **If we skip it:** Users think patterns are broken for files (they are), and
   file noise keeps inflating the top-files list.
 
-### [ ] 2. Files whose name starts with `..` vanish from the tree (`internal/report/report.go:43`)
+### [x] 2. Files whose name starts with `..` vanish from the tree (`internal/report/report.go:43`)
+> **Closed 2026-11-09:** fixed by PR #1 (the fstatat walk + rollup rewrite).
+> Re-verified by rerun: `..secret` now rolls up; `visitFile` gates dedupe on `nlink > 1`; `dirTask` is `{path}` only.
 
 - **What this is:** `Build` skips files it thinks are "outside root" by
   checking `strings.HasPrefix(rel, "..")`.
@@ -55,7 +57,9 @@ the scan goroutine are no-ops, not panics.
 - **If we skip it:** Tree totals silently disagree with the summary line; the
   difference is invisible and unexplainable.
 
-### [ ] 3. Hardlink dedupe records every file, ~100 MB+ on a full-home scan (`internal/scanner/scanner.go:265`, `internal/scanner/fsutil.go:54-80`)
+### [x] 3. Hardlink dedupe records every file, ~100 MB+ on a full-home scan (`internal/scanner/scanner.go:265`, `internal/scanner/fsutil.go:54-80`)
+> **Closed 2026-11-09:** fixed by PR #1 (the fstatat walk + rollup rewrite).
+> Re-verified by rerun: `..secret` now rolls up; `visitFile` gates dedupe on `nlink > 1`; `dirTask` is `{path}` only.
 
 - **What this is:** A global `map[(dev,inode)]` used so a hardlinked file is
   counted once.
@@ -138,7 +142,9 @@ the scan goroutine are no-ops, not panics.
 
 ## Lean
 
-### [ ] 8. `dirTask.dev` is written three times and never read (`internal/scanner/scanner.go:62`)
+### [x] 8. `dirTask.dev` is written three times and never read (`internal/scanner/scanner.go:62`)
+> **Closed 2026-11-09:** fixed by PR #1 (the fstatat walk + rollup rewrite).
+> Re-verified by rerun: `..secret` now rolls up; `visitFile` gates dedupe on `nlink > 1`; `dirTask` is `{path}` only.
 
 - **What this is:** The queued task carries the directory's device id, set at
   `scanner.go:116` and `scanner.go:255`.
