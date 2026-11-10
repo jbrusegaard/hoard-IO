@@ -45,7 +45,7 @@ type Stats struct {
 	DirsScanned int64 `json:"dirsScanned"`
 	FilesSeen   int64 `json:"filesSeen"`
 	BytesDisk   int64 `json:"bytesDisk"`
-	Skipped     int64 `json:"skipped"` // dirs excluded via patterns or filtered by XDev
+	Skipped     int64 `json:"skipped"` // entries excluded via patterns; dirs also counted when filtered by XDev
 	Other       int64 `json:"other"`   // sockets, fifos, devices: counted but not sized
 }
 
@@ -309,6 +309,13 @@ func (w *walker) visitDir(d dirCtx, name string, t *tally) {
 }
 
 func (w *walker) visitFile(d dirCtx, name string, t *tally) {
+	path := joinPath(d.path, name)
+	if w.matcher.match(name, path) {
+		t.skipped++
+
+		return
+	}
+
 	info, err := d.statEntry(name)
 	if err != nil {
 		t.other++ // entry vanished between readdir and stat
@@ -328,7 +335,7 @@ func (w *walker) visitFile(d dirCtx, name string, t *tally) {
 	t.bytes += info.disk
 
 	w.out <- File{
-		Path:         joinPath(d.path, name),
+		Path:         path,
 		Name:         name,
 		DiskUsage:    info.disk,
 		ApparentSize: info.size,

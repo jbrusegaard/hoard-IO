@@ -95,6 +95,37 @@ func TestExcludes(t *testing.T) {
 	}
 }
 
+func TestExcludeFilePatterns(t *testing.T) {
+	// Excludes must apply to files too, not only to directories: a user
+	// passing --exclude '*.log' expects log files gone from results.
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "keep.bin"), 4096)
+	writeFile(t, filepath.Join(root, "big.log"), 65536)
+	writeFile(t, filepath.Join(root, "nested", "cache.dat"), 8192)
+
+	res, err := Scan(context.Background(), root, &Options{
+		Workers:  2,
+		Excludes: []string{"*.log", "cache.dat"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := paths(res.Files)
+	if got["big.log"] || got["cache.dat"] {
+		t.Errorf("excluded file patterns present: %v", got)
+	}
+	if !got["keep.bin"] {
+		t.Error("keep.bin missing")
+	}
+	if res.Stats.Skipped != 2 {
+		t.Errorf("Skipped = %d, want 2", res.Stats.Skipped)
+	}
+	if res.Stats.FilesSeen != 1 {
+		t.Errorf("FilesSeen = %d, want 1", res.Stats.FilesSeen)
+	}
+}
+
 func TestWideFanOutCompletes(t *testing.T) {
 	// Regression: with a bounded dirs channel and few workers, wide trees
 	// deadlock (every worker blocks on send, nobody receives).

@@ -24,7 +24,8 @@ the scan goroutine are no-ops, not panics.
 
 ## Must fix
 
-### [ ] 1. `--exclude` silently does nothing to files (`internal/scanner/scanner.go:258-280`)
+### [x] 1. `--exclude` silently does nothing to files (`internal/scanner/scanner.go:258-280`)
+> **Fixed 2026-11-09:** `visitFile` now matches patterns before stat; TestExcludeFilePatterns covers it.
 
 - **What this is:** The `--exclude` flag takes glob patterns ("base name or
   full path", per `--help`) and is meant to skip matching entries.
